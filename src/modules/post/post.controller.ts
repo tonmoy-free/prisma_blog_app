@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { postService } from "./post.service";
 import { error } from "node:console";
+import { PostStatus } from "../../../generated/prisma/enums";
 
 const createPost = async (req: Request, res: Response) => {
     try {
@@ -21,7 +22,39 @@ const createPost = async (req: Request, res: Response) => {
     }
 }
 
+const getAllPost = async (req: Request, res: Response) => {
+    try {
+        const { search } = req.query
+
+        const searchString = typeof search === 'string' ? search : undefined
+
+        const tags = req.query.tags ? (req.query.tags as string).split(",") : [];
+
+        //true or false
+        const isFeatured = req.query.isFeatured
+            ? req.query.isFeatured === 'true'
+                ? true : req.query.isFeatured === 'false'
+                    ? false
+                    : undefined
+            : undefined;
+
+        const status = req.query.status as PostStatus | undefined;
+
+        const authorId = req.query.authorId as string | undefined;
+
+        const result = await postService.getAllPost({ search: searchString, tags, isFeatured, status, authorId });
+        res.status(200).json(result)
+    } catch (e) {
+        res.status(400).json(
+            {
+                error: "Post creation failed",
+                details: e
+            })
+    }
+}
+
 
 export const PostController = {
-    createPost
+    createPost,
+    getAllPost
 }
